@@ -1,2 +1,1 @@
-# ai-eng-bootcamp
-self bootcamp
+2026 may...
