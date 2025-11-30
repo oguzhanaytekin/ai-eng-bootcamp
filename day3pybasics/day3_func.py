@@ -7,7 +7,7 @@ def hesapla_ortalama(vize, final):
 def harf_not_belirle(ortalama):
     if ortalama < 50:
         return "Kaldiniz"
-    elif ortalama > 50 and ortalama < 80:
+    elif ortalama >= 50 and ortalama < 80:
         return "Gectiniz"
     else:
         return "Tebrikler (AA)"
@@ -24,7 +24,7 @@ def main():
 
     while True:
         isim_input = input("Ogrenci adi giriniz:")
-        if isim_input == "q".lower():
+        if isim_input.lower() == "q":
             break
         vize = int(input("Vize notu giriniz:"))
         final = int(input("Final Notu giriniz."))
