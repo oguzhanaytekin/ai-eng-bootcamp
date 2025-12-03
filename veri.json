@@ -1,0 +1,27 @@
+[
+    {
+        "isim": "lala",
+        "vize": 88,
+        "final": 55
+    },
+    {
+        "isim": "papa",
+        "vize": 100,
+        "final": 100
+    },
+    {
+        "isim": "qaqa",
+        "vize": 50,
+        "final": 33
+    },
+    {
+        "isim": "zaza",
+        "vize": 55,
+        "final": 49
+    },
+    {
+        "isim": "mama",
+        "vize": 77,
+        "final": 40
+    }
+]
