@@ -45,18 +45,18 @@ def verileri_kaydet(liste):
     with open(DOSYA_ADI, "w", encoding="utf-8") as f:
         json.dump(kaydedilecek_liste, f, indent=4)
 
-    print("💾 Veriler başarıyla kaydedildi.")
+    print("Veriler başarıyla kaydedildi.")
 
 
 # --- ANA PROGRAM ---
 def main():
     # Başlangıçta verileri yükle
     sinif_listesi = verileri_yukle()
-    print(f"\n♻️ {len(sinif_listesi)} eski kayıt yüklendi.")
+    print(f"\n {len(sinif_listesi)} eski kayıt yüklendi.")
 
     # Mevcut listeyi bir gösterelim (Opsiyonel)
     for ogr in sinif_listesi:
-        print(ogr.bilgi_goster())
+        print(ogr.__str__())
 
     while True:
         print("\n--- YENİ GİRİŞ ---")
@@ -78,7 +78,7 @@ def main():
 
             # Listeye ekle
             sinif_listesi.append(yeni_ogr)
-            print(f"✅ Eklendi: {yeni_ogr.bilgi_goster()}")
+            print(f" Eklendi: {yeni_ogr.__str__()}")
 
         except ValueError:
             print("Lütfen sayı giriniz.")
@@ -86,7 +86,7 @@ def main():
 
     # Çıkarken kaydet
     verileri_kaydet(sinif_listesi)
-    print("👋 Program kapatılıyor...")
+    print("Program kapatılıyor...")
 
 
 if __name__ == "__main__":

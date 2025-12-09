@@ -23,5 +23,35 @@
         "isim": "mama",
         "vize": 77,
         "final": 40
+    },
+    {
+        "isim": "kk",
+        "vize": 90,
+        "final": 77
+    },
+    {
+        "isim": "asd",
+        "vize": 20,
+        "final": 40
+    },
+    {
+        "isim": "juice",
+        "vize": 100,
+        "final": 55
+    },
+    {
+        "isim": "qwe",
+        "vize": 31,
+        "final": 72
+    },
+    {
+        "isim": "metro",
+        "vize": 55,
+        "final": 77
+    },
+    {
+        "isim": "mbmb",
+        "vize": 55,
+        "final": 44
     }
 ]
