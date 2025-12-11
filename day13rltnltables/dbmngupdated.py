@@ -126,18 +126,18 @@ def karne(ogrenci_id):
     if not sonuclar:
         print(f"{ogrenci_id} icin sonuc bulunamadı.")
 
-        print(f"\n🎓 {sonuclar[0][0]} {sonuclar[0][1]} İÇİN KARNE:")
+        print(f"\n {sonuclar[0][0]} {sonuclar[0][1]} İÇİN KARNE:")
         print("-" * 30)
     ortalama_toplam = 0
     for satir in sonuclar:
-        # satir = ('Victor', 'Osimhen', 'Fizik', 45)
+        # satir = ('isim', 'soyisim', 'ders', numara")
         ders = satir[2]
         puan = satir[3]
-        print(f"📘 {ders}: {puan}")
+        print(f" {ders}: {puan}")
         ortalama_toplam += puan
         ort = ortalama_toplam / len(sonuclar)
         print("-" * 30)
-        print(f"📊 ORTALAMA: {ort:.2f}")
+        print(f" ORTALAMA: {ort:.2f}")
 
 
 if __name__ == "__main__":
