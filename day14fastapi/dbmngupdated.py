@@ -160,3 +160,48 @@ if __name__ == "__main__":
     ogrenci_goster()
     not_ekle(1, "fizik", 45)
     karne(1)
+
+
+# dbmngupdated.py dosyasının en altına yapıştır:
+def ogrenci_bul_api(aranan_numara):
+    conn = baglanti_kur()
+    cursor = conn.cursor()
+    # Virgül hatası olmasın diye tek satırda net yazalım:
+    cursor.execute("SELECT * FROM ogrenciler WHERE numara = ?", (aranan_numara,))
+    sonuc = cursor.fetchone()
+    conn.close()
+    return sonuc
+
+
+def ogrenci_bul_isimle_api(aranan_isim):
+    conn = baglanti_kur()
+    cursor = conn.cursor()
+    # Virgül hatası olmasın diye tek satırda net yazalım:
+    cursor.execute("SELECT * FROM ogrenciler WHERE isim = ?", (aranan_isim,))
+    sonuc_list = cursor.fetchall()
+    conn.close()
+    return sonuc_list
+
+
+def ogrenci_sil_api(silinecek_numara):
+    conn = baglanti_kur()
+    cursor = conn.cursor()
+
+    # Numarası eşleşen HERKESİ sil (Toplu Temizlik)
+    cursor.execute("DELETE FROM ogrenciler WHERE numara = ?", (silinecek_numara,))
+    conn.commit()
+    conn.close()
+    return True
+
+
+def ogrenci_guncelle_api(hedef_numara, yeni_isim, yeni_soyisim, yeni_numara):
+    conn = baglanti_kur()
+    cursor = conn.cursor()
+
+    komut = "UPDATE ogrenciler  SET isim= ?, soyisim=?, numara=? WHERE numara=?  "
+
+    cursor.execute(komut, (yeni_isim, yeni_soyisim, yeni_numara, hedef_numara))
+
+    conn.commit()
+    conn.close()
+    return True
