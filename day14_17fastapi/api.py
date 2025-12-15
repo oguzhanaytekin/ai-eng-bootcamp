@@ -2,9 +2,14 @@ from fastapi import FastAPI
 from pydantic import BaseModel
 import dbmngupdated as db  # Senin veritabanı dosyanın adı
 from okul import Ogrenci
-from fastapi import Query
+from fastapi import Query, HTTPException, status
 
-app = FastAPI()
+
+app = FastAPI(
+    title="Okul Yönetim Sistemi API",
+    description="Öğrencileri yönetmek için geliştirilmiş CRUD API sistemi.",
+    version="1.0.0",
+)
 
 
 # --- 1. SİPARİŞ FİŞİ (PYDANTIC) ---
@@ -16,19 +21,19 @@ class OgrenciModel(BaseModel):
 
 
 # --- 2. ANA SAYFA (GET) ---
-@app.get("/")
+@app.get("/", tags=["Genel"])
 def ana_sayfa():
     return {"mesaj": "Okul API Sistemine Hosgeldiniz!"}
 
 
 # --- 3. LİSTELEME (GET) ---
-@app.get("/ogrenciler")
+@app.get("/ogrenciler", tags=["Öğrenci İşlemleri"])
 def ogrencileri_listele():
     liste = db.get_tum_ogrenciler()
     return {"veriler": liste}
 
 
-@app.get("/ogrenciler/ara")
+@app.get("/ogrenciler/ara", tags=["Öğrenci İşlemleri"])
 def ogrenci_ara(
     # Artık ikisi de "None" (Yani boş geçilebilir, zorunlu değil)
     numara: int = Query(None, description="Öğrenci Numarası"),
@@ -48,7 +53,9 @@ def ogrenci_ara(
             }
             return {"mesaj": "ogrenci bulundu", "veri": ogrenci_data}
         else:
-            return {"mesaj": f"{numara} nolu ogrenci bulunamadı"}
+            raise HTTPException(
+                status_code=404, detail=f"{numara} nolu öğrenci sistemde bulunamadı."
+            )
 
     elif isim is not None:
         gelen_liste = db.ogrenci_bul_isimle_api(isim)
@@ -70,7 +77,9 @@ def ogrenci_ara(
 
 
 # --- 4. EKLEME (POST) - İŞTE EKSİK OLAN KISIM BU! ---
-@app.post("/ogrenciler")
+@app.post(
+    "/ogrenciler", status_code=status.HTTP_201_CREATED, tags=["Öğrenci İşlemleri"]
+)  # statuscode http201
 def ogrenci_ekle(yeni_ogrenci: OgrenciModel):
     # Gelen JSON verisini, bizim eski Ogrenci nesnesine çeviriyoruz
     nesne = Ogrenci(yeni_ogrenci.isim, yeni_ogrenci.soyisim, yeni_ogrenci.numara)
@@ -83,7 +92,7 @@ def ogrenci_ekle(yeni_ogrenci: OgrenciModel):
 
 # --- 5. SİLME (DELETE) ---
 # Kullanım: DELETE http://localhost:8000/ogrenciler/sil/31
-@app.delete("/ogrenciler/sil/{numara}")
+@app.delete("/ogrenciler/sil/{numara}", tags=["Öğrenci İşlemleri"])
 def ogrenci_sil(numara: int):
 
     durum = db.ogrenci_sil_api(numara)
@@ -91,11 +100,13 @@ def ogrenci_sil(numara: int):
     if durum == True:
         return {"mesaj": f"{numara} numaralı öğrenci okuldan atıldı/silindi."}
     else:
-        return {"hata": f"{numara} numaralı bir öğrenci zaten yok."}
+        raise HTTPException(
+            status_code=404, detail="silinecek kayıt bulunamadı.zaten yok."
+        )
 
 
 # Kullanım: PUT http://localhost:8000/ogrenciler/guncelle/1
-@app.put("/ogrenciler/guncelle/{hedef_numara}")
+@app.put("/ogrenciler/guncelle/{hedef_numara}", tags=["Öğrenci İşlemleri"])
 def ogrenci_guncelle(hedef_numara: int, guncel_veri: OgrenciModel):
     db.ogrenci_guncelle_api(
         hedef_numara, guncel_veri.isim, guncel_veri.soyisim, guncel_veri.numara
