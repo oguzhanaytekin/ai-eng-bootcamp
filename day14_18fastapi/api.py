@@ -1,5 +1,5 @@
 from fastapi import FastAPI
-from pydantic import BaseModel
+from pydantic import BaseModel, Field
 import dbmngupdated as db  # Senin veritabanı dosyanın adı
 from okul import Ogrenci
 from fastapi import Query, HTTPException, status
@@ -14,10 +14,19 @@ app = FastAPI(
 
 # --- 1. SİPARİŞ FİŞİ (PYDANTIC) ---
 # Kullanıcıdan veri gelirken bu kurallara uymalı
+# --- Veri Modeli (Zırhlı Versiyon) ---
 class OgrenciModel(BaseModel):
-    isim: str
-    soyisim: str
-    numara: int
+    isim: str = Field(
+        ..., min_length=2, max_length=30, description="Öğrencinin adı (2-30 karakter)"
+    )
+    soyisim: str = Field(
+        ..., min_length=2, max_length=30, description="Öğrencinin soyadı"
+    )
+    # gt=0 -> 0'dan büyük olmalı (Greater Than)
+    # le=10000 -> 10000'den küçük veya eşit olmalı (Less Equal)
+    numara: int = Field(
+        ..., gt=0, le=10000, description="Okul numarası (1-10000 arası)"
+    )
 
 
 # --- 2. ANA SAYFA (GET) ---
@@ -80,13 +89,38 @@ def ogrenci_ara(
 @app.post(
     "/ogrenciler", status_code=status.HTTP_201_CREATED, tags=["Öğrenci İşlemleri"]
 )  # statuscode http201
+
+
+# def ogrenci_ekle(yeni_ogrenci: OgrenciModel):
+## Gelen JSON verisini, bizim eski Ogrenci nesnesine çeviriyoruz
+# nesne = Ogrenci(yeni_ogrenci.isim, yeni_ogrenci.soyisim, yeni_ogrenci.numara)
+
+## Veritabanına kaydet
+# db.ogrenci_ekle(nesne)
+
+# return {"mesaj": f"{yeni_ogrenci.isim} başarıyla eklendi!"}
+
+
+# --- 4. Ekleme (POST) ---
+@app.post(
+    "/ogrenciler", status_code=status.HTTP_201_CREATED, tags=["Öğrenci İşlemleri"]
+)
 def ogrenci_ekle(yeni_ogrenci: OgrenciModel):
-    # Gelen JSON verisini, bizim eski Ogrenci nesnesine çeviriyoruz
+
+    # 1. ÖNCE KONTROL ET: Bu numara zaten var mı?
+    # Dedektifi gönderiyoruz...
+    mevcut_ogrenci = db.ogrenci_bul_api(yeni_ogrenci.numara)
+
+    if mevcut_ogrenci:
+        # Eğer bir sonuç dönerse, numara dolu demektir! HATA FIRLAT.
+        raise HTTPException(
+            status_code=400,  # 400: Bad Request (Kullanıcı Hatası)
+            detail=f"{yeni_ogrenci.numara} numarası zaten kayıtlı! Başka kapıya.",
+        )
+
+    # 2. TEMİZSE EKLE
     nesne = Ogrenci(yeni_ogrenci.isim, yeni_ogrenci.soyisim, yeni_ogrenci.numara)
-
-    # Veritabanına kaydet
     db.ogrenci_ekle(nesne)
-
     return {"mesaj": f"{yeni_ogrenci.isim} başarıyla eklendi!"}
 
 

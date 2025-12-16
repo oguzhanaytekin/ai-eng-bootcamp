@@ -77,8 +77,10 @@ def ogrenci_goster():
     conn.close()
 
 
+"""
 yeniogr = Ogrenci("Victor", "Osimhen", 45)
 ogrenci_ekle(yeniogr)
+"""
 
 ogrenci_goster()
 
