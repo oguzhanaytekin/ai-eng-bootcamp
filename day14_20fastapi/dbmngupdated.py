@@ -178,11 +178,12 @@ def ogrenci_bul_api(aranan_numara):
 def ogrenci_bul_isimle_api(aranan_isim):
     conn = baglanti_kur()
     cursor = conn.cursor()
-    # Virgül hatası olmasın diye tek satırda net yazalım:
-    cursor.execute("SELECT * FROM ogrenciler WHERE isim = ?", (aranan_isim,))
-    sonuc_list = cursor.fetchall()
+    # % isareti "ne olursa olsun" demektir
+    sql_sorgusu = "SELECT * FROM ogrenciler WHERE isim LIKE ?"
+    cursor.execute(sql_sorgusu, ("%" + aranan_isim + "%",))
+    sonuc_listesi = cursor.fetchall()
     conn.close()
-    return sonuc_list
+    return sonuc_listesi
 
 
 def ogrenci_sil_api(silinecek_numara):
