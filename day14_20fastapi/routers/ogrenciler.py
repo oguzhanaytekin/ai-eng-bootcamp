@@ -1,4 +1,13 @@
-from fastapi import APIRouter, HTTPException, status, Query
+from fastapi import (
+    APIRouter,
+    HTTPException,
+    status,
+    Query,
+    UploadFile,
+    File,
+)  # <--- Eklendi
+import shutil  # <--- Dosya kaydetmek için gerekli
+import os  # <--- Klasör yolları için gerekli
 from pydantic import BaseModel, Field
 from typing import Optional
 
@@ -110,3 +119,29 @@ async def ogrenci_guncelle(hedef_numara: int, guncel_veri: OgrenciModel):
         hedef_numara, guncel_veri.isim, guncel_veri.soyisim, guncel_veri.numara
     )
     return {"mesaj": "Güncelleme başarılı."}
+
+
+# --- 6. Dosya Yükleme (Upload) ---
+
+
+@router.post("/ogrenciler/yukle")
+async def resim_yukle(dosya: UploadFile = File(...)):
+    # 1. Dosyayı nereye kaydedeceğiz?
+    klasor_yolu = "yuklenenler"
+
+    # Dosyanın adını temizleyelim (boşluk varsa _ yapalım)
+    dosya_adi = dosya.filename.replace(" ", "_")
+
+    # Hedef yol: yuklenenler/resim.png
+    kayit_yolu = os.path.join(klasor_yolu, dosya_adi)
+
+    # 2. Dosyayı fiziksel olarak kaydet
+    # 'wb' = write binary (resim/video gibi dosyalar binary yazılır)
+    with open(kayit_yolu, "wb") as buffer:
+        shutil.copyfileobj(dosya.file, buffer)
+
+    return {
+        "mesaj": "Dosya başarıyla yüklendi",
+        "dosya_adi": dosya_adi,
+        "kayit_yeri": kayit_yolu,
+    }
