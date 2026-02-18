@@ -1,3 +1,4 @@
+from fastapi.staticfiles import StaticFiles
 from fastapi import FastAPI
 from routers import ogrenciler  # <--- Oluşturduğumuz dosyayı çağırıyoruz
 
@@ -7,7 +8,7 @@ app = FastAPI(
     version="2.0 (Professional)",
     description="Router yapısına geçmiş, modüler ve asenkron mimari.",
 )
-
+app.mount("/dosyalar", StaticFiles(directory="yuklenenler"), name="static")
 # --- Router'ları (Departmanları) Bağla ---
 # Gelen istek 'öğrenci işlemi' ise, o dosyaya yönlendir:
 app.include_router(ogrenciler.router)

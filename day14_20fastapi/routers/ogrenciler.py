@@ -15,6 +15,8 @@ from typing import Optional
 import dbmngupdated as db
 from okul import Ogrenci
 
+db.tablo_olustur()
+
 # --- ROUTER KURULUMU (Artık 'app' değil 'router' var) ---
 router = APIRouter(
     tags=["Öğrenci İşlemleri"]  # Swagger'daki başlık burada otomatik tanımlanır
@@ -124,24 +126,44 @@ async def ogrenci_guncelle(hedef_numara: int, guncel_veri: OgrenciModel):
 # --- 6. Dosya Yükleme (Upload) ---
 
 
-@router.post("/ogrenciler/yukle")
-async def resim_yukle(dosya: UploadFile = File(...)):
-    # 1. Dosyayı nereye kaydedeceğiz?
+# --- 6. Dosya Yükleme (Akıllı Versiyon) ---
+@router.post("/ogrenciler/{numara}/resim-yukle")
+async def resim_yukle(numara: int, dosya: UploadFile = File(...)):
+
+    # 1. Önce böyle bir öğrenci var mı diye kontrol edelim
+    mevcut_ogrenci = db.ogrenci_bul_api(numara)
+    if not mevcut_ogrenci:
+        raise HTTPException(
+            status_code=404, detail="Bu numaraya ait öğrenci bulunamadı!"
+        )
+
+    # 2. Dosyayı nereye kaydedeceğiz?
     klasor_yolu = "yuklenenler"
+    if not os.path.exists(klasor_yolu):
+        os.makedirs(klasor_yolu)
 
-    # Dosyanın adını temizleyelim (boşluk varsa _ yapalım)
-    dosya_adi = dosya.filename.replace(" ", "_")
+    # 3. İSİM TEMİZLİĞİ VE GÜVENLİK (Çok Önemli!)
+    # "Ekran Görüntüsü 2024.png" gibi isimler baş ağrıtır.
+    # Resmi öğrencinin numarasıyla kaydedelim: Örn "45_profil.png"
+    uzanti = dosya.filename.split(".")[
+        -1
+    ]  # Dosyanın sonundaki .png veya .jpg kısmını alır
+    yeni_dosya_adi = f"{numara}_profil.{uzanti}"
 
-    # Hedef yol: yuklenenler/resim.png
-    kayit_yolu = os.path.join(klasor_yolu, dosya_adi)
+    kayit_yolu = os.path.join(klasor_yolu, yeni_dosya_adi)
 
-    # 2. Dosyayı fiziksel olarak kaydet
-    # 'wb' = write binary (resim/video gibi dosyalar binary yazılır)
+    # 4. Dosyayı fiziksel olarak kaydet
     with open(kayit_yolu, "wb") as buffer:
         shutil.copyfileobj(dosya.file, buffer)
 
+    # 5. VERİTABANINA ZIMBALA!
+    # Tarayıcıdan erişilebilmesi için başına /dosyalar/ ekliyoruz (Static Files)
+    resim_linki = f"/dosyalar/{yeni_dosya_adi}"
+
+    # dbmngupdated içindeki yeni fonksiyonumuzu çağırıyoruz:
+    db.profil_resmi_ekle_api(numara, resim_linki)
+
     return {
-        "mesaj": "Dosya başarıyla yüklendi",
-        "dosya_adi": dosya_adi,
-        "kayit_yeri": kayit_yolu,
+        "mesaj": f"{numara} numaralı öğrencinin profil resmi güncellendi.",
+        "resim_linki": resim_linki,
     }

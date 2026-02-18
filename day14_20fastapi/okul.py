@@ -13,10 +13,11 @@ class Kisi(ABC):
 
 
 class Ogrenci(Kisi):
-    def __init__(self, isim, soyisim, stu_id):
+    def __init__(self, isim, soyisim, stu_id, profil_resmi=None):
 
         super().__init__(isim, soyisim)
         self.stu_id = stu_id
+        self.profil_resmi = profil_resmi
 
     def kimlik(self):
         # temelbilgi = super().kimlik() #abstract olunca pasifize oldu
