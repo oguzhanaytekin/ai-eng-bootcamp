@@ -1,6 +1,7 @@
 from okul import Ogrenci
 
 import sqlite3
+from hashing import Hash
 
 
 def baglanti_kur():
@@ -34,6 +35,16 @@ def tablo_olustur():
     )
     """
     cursor.execute(komut2)
+
+    # YENİ: Kullanıcılar (Yöneticiler) Tablosu
+    komut3 = """
+    CREATE TABLE IF NOT EXISTS kullanicilar (
+        id INTEGER PRIMARY KEY AUTOINCREMENT,
+        kullanici_adi TEXT UNIQUE,
+        sifre TEXT
+    )
+    """
+    cursor.execute(komut3)
 
     conn.commit()
     conn.close()
@@ -233,6 +244,43 @@ def profil_resmi_ekle_api(hedef_numara, resim_linki):
     conn.commit()
     conn.close()
     return True
+
+
+def kullanici_ekle_api(kullanici_adi, duz_sifre):
+    conn = baglanti_kur()
+    cursor = conn.cursor()
+
+    # İŞTE SİHİR BURADA: Şifreyi Hashle (Gizle)!
+    gizli_sifre = Hash.bcrypt(duz_sifre)
+
+    # Terminalde gözümüzle görelim diye print atıyoruz:
+    print(
+        f"Kayıt Başarılı! Orijinal: {duz_sifre} ---> Veritabanına Yazılan: {gizli_sifre}"
+    )
+
+    komut = "INSERT INTO kullanicilar (kullanici_adi, sifre) VALUES (?, ?)"
+    try:
+        cursor.execute(komut, (kullanici_adi, gizli_sifre))
+        conn.commit()
+    except sqlite3.IntegrityError:
+        print("Bu kullanıcı adı zaten var!")
+    finally:
+        conn.close()
+
+
+def kullanici_getir_api(kullanici_adi):
+    conn = baglanti_kur()
+    cursor = conn.cursor()
+
+    komut = "SELECT * FROM kullanicilar WHERE kullanici_adi = ?"
+    cursor.execute(komut, (kullanici_adi,))
+
+    sonuc = (
+        cursor.fetchone()
+    )  # Ya adamın bilgilerini (id, isim, şifre) getirir, ya da None (Yok) döner
+    conn.close()
+
+    return sonuc
 
 
 if __name__ == "__main__":

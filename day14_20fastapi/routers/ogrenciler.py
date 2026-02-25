@@ -10,10 +10,15 @@ import shutil  # <--- Dosya kaydetmek için gerekli
 import os  # <--- Klasör yolları için gerekli
 from pydantic import BaseModel, Field
 from typing import Optional
+from token_islemleri import token_dogrula, token_olustur
+from fastapi import Depends
 
 # Ana dizindeki veritabanı dosyalarını çağırıyoruz
 import dbmngupdated as db
 from okul import Ogrenci
+from hashing import Hash
+from token_islemleri import token_olustur
+from fastapi.security import OAuth2PasswordRequestForm
 
 db.tablo_olustur()
 
@@ -21,6 +26,16 @@ db.tablo_olustur()
 router = APIRouter(
     tags=["Öğrenci İşlemleri"]  # Swagger'daki başlık burada otomatik tanımlanır
 )
+
+
+class KullaniciKayit(BaseModel):
+    kullanici_adi: str
+    sifre: str
+
+
+class KullaniciGiris(BaseModel):
+    kullanici_adi: str
+    sifre: str
 
 
 # --- Veri Modeli (Buraya taşındı) ---
@@ -106,9 +121,15 @@ async def ogrenci_ekle(yeni_ogrenci: OgrenciModel):
     return {"mesaj": f"{yeni_ogrenci.isim} eklendi."}
 
 
-# 4. Silme
+# SİLME (KİLİTLENDİ 🔒)
 @router.delete("/ogrenciler/sil/{numara}")
-async def ogrenci_sil(numara: int):
+async def ogrenci_sil(numara: int, aktif_kullanici: str = Depends(token_dogrula)):
+
+    # Eğer istersen terminalde "şu adam silme işlemi yapıyor" diye yazdırabilirsin:
+    print(
+        f"DİKKAT: {aktif_kullanici} adlı yönetici, {numara} numaralı öğrenciyi siliyor!"
+    )
+
     if not db.ogrenci_sil_api(numara):
         raise HTTPException(status_code=404, detail="Silinecek kayıt yok.")
     return {"mesaj": f"{numara} silindi."}
@@ -167,3 +188,35 @@ async def resim_yukle(numara: int, dosya: UploadFile = File(...)):
         "mesaj": f"{numara} numaralı öğrencinin profil resmi güncellendi.",
         "resim_linki": resim_linki,
     }
+
+
+@router.post("/kayit-ol", tags=["Güvenlik"])
+async def kayit_ol(kullanici: KullaniciKayit):
+    # dbmngupdated içindeki fonksiyonumuzu çağırıyoruz
+    db.kullanici_ekle_api(kullanici.kullanici_adi, kullanici.sifre)
+
+    return {
+        "mesaj": f"{kullanici.kullanici_adi} başarıyla ve GÜVENLİ bir şekilde kaydedildi!"
+    }
+
+
+# GİRİŞ YAP (GÜNCELLENDİ - SWAGGER İLE TAM UYUMLU)
+@router.post("/giris-yap", tags=["Güvenlik"])
+async def giris_yap(form_verisi: OAuth2PasswordRequestForm = Depends()):
+
+    # Artık form_verisi.username ve form_verisi.password kullanıyoruz
+    db_kullanici = db.kullanici_getir_api(form_verisi.username)
+
+    if not db_kullanici:
+        raise HTTPException(status_code=404, detail="Böyle bir kullanıcı bulunamadı!")
+
+    veritabanindaki_gizli_sifre = db_kullanici[2]
+
+    sifre_dogru_mu = Hash.verify(veritabanindaki_gizli_sifre, form_verisi.password)
+
+    if not sifre_dogru_mu:
+        raise HTTPException(status_code=400, detail="Hatalı şifre girdiniz!")
+
+    jwt_token = token_olustur(veri={"sub": form_verisi.username})
+
+    return {"access_token": jwt_token, "token_type": "bearer"}
